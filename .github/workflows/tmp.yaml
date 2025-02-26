@@ -1,0 +1,37 @@
+name: download latest release from a public repo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: get latest release
+        run: |
+          REPO="opencart/opencart"
+          API_URL="https://api.github.com/repos/$REPO/releases/latest"
+
+          LATEST_RELEASE=$(curl -s $API_URL | jq -r '.tag_name')
+
+          echo "Latest release tag: $LATEST_RELEASE"
+          echo "LATEST_RELEASE=$LATEST_RELEASE" >> $GITHUB_ENV
+
+      - name: download source code zip
+        run: |
+          REPO="opencart/opencart"
+          API_URL="https://github.com/$REPO/releases/download"
+
+          FILE_URL="$API_URL/$LATEST_RELEASE/opencart-$LATEST_RELEASE.zip"
+
+          echo "Downloading $FILE_URL"
+          curl -L -o /tmp/opencart.zip "$FILE_URL"
+
+      - name: check if file exists
+        run: ls -lh /tmp/opencart.zip
+
+      - name: extract zip to Absolute Path
+        run: |
+          mkdir -p /opt/opencart
+          unzip /tmp/opencart.zip -d /opt/opencart
